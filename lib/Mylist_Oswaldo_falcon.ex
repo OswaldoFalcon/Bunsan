@@ -1,12 +1,14 @@
 
 defmodule Mylist do
 
-    #Funcion Each
+    #Funcion each
+    def each([x], fun) do
+        [h | _] = [x]
+        fun.(h)
+    end
     def each([h | t], fun) do
-            IO.puts(fun.(h))
-            if length([h | t]) > 1 do
-                each(t, fun)
-            end
+        IO.puts(fun.(h))
+        each(t, fun)
     end
 
     #2.Funcion Map

@@ -3,8 +3,8 @@ defmodule MylisTest do
     import ExUnit.CaptureIO
       
     test "Funcion each/2 sumando " do
-        fun = fn -> assert Mylist.each([0, 2, 4], fn x -> x + 1 end)== nil end
-        assert capture_io(fun) == "1\n3\n5\n"
+        fun = fn -> assert Mylist.each([0, 2, 4], fn x -> x + 1 end) == 5 end
+        assert capture_io(fun) == "1\n3\n"
     end
 
     test "funcion map/2 sumando" do
