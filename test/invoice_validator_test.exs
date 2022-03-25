@@ -54,6 +54,9 @@ defmodule InvoiceValidatorTest do
         end
     end
   end
+  test "Cuando son iguales las fechas y horas de emision y timbrado" do
+    assert {:ok, "your in the same time"} == validator_dates(zona_f(~N[2022-03-23 14:06:35], "America/Tijuana"), @timbrado)
+  end
 
    defp zona_f(%NaiveDateTime{} = date, zona), do: DateTime.from_naive!(date,zona,Tzdata.TimeZoneDatabase) 
 end
