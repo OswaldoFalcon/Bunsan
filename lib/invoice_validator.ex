@@ -16,8 +16,4 @@ defmodule InvoiceValidator do
             DateTime.compare(emisor_date,pac_date) == :eq -> {:ok, "your in the same time"}
         end
     end
-    #	~N[2018-10-28 02:30:00], "Mexico/BajaNorte"
-    #   ~N[2018-10-28 02:30:00], "Mexico/General"
-    def zona(%NaiveDateTime{} = date, zona), do: DateTime.from_naive!(date,zona,Tzdata.TimeZoneDatabase)
-    
 end

@@ -1,85 +1,59 @@
 defmodule InvoiceValidatorTest do
   use ExUnit.Case
+  import InvoiceValidator
+  
+  @timbrado DateTime.from_naive!(~N[2022-03-23 15:06:35],"Mexico/General",Tzdata.TimeZoneDatabase)
+  data= [
+    {"72 hours before", "America/Tijuana", ~N[2022-03-20 13:06:31], "FAIL passes 72 limit"},
+    {"72 hours before", "America/Mazatlan", ~N[2022-03-20 14:06:31],"FAIL passes 72 limit"},
+    {"72 hours before", "Mexico/General", ~N[2022-03-20 15:06:31], "FAIL passes 72 limit" },
+    {"72 hours before", "America/Cancun", ~N[2022-03-20 16:06:31], "FAIL passes 72 limit" },
+    {"72 hours before", "America/Tijuana", ~N[2022-03-20 14:06:35], "SUCCESS on time" }, #tijuana Hora corregida
+    {"72 hours before", "America/Mazatlan", ~N[2022-03-20 14:06:35], "SUCCESS on time" }, #Sinaloa
+    {"72 hours before", "Mexico/General", ~N[2022-03-20 15:06:35], "SUCCESS on time" }, #CDMX
+    {"72 hours before", "America/Cancun", ~N[2022-03-20 16:06:35], "SUCCESS on time" }, #QROO
+    {"5 mins ahead", "America/Tijuana", ~N[2022-03-23 13:11:35], "SUCCESS on time" }, #tijuana
+    {"5 mins ahead", "America/Mazatlan", ~N[2022-03-23 14:11:35], "SUCCESS on time" }, #Sinaloa
+    {"5 mins ahead", "Mexico/General", ~N[2022-03-23 15:11:35], "SUCCESS on time" }, #CDMX
+    {"5 mins ahead", "America/Cancun", ~N[2022-03-23 16:11:35], "SUCCESS on time" }, #QROO
+    {"5 mins ahead", "America/Tijuana", ~N[2022-03-23 14:11:36], "FAIL yu are more 5 mins ahead" }, #corrigio porque se estaba considerando con una hora de mas a tijuana
+    {"5 mins ahead", "America/Mazatlan", ~N[2022-03-23 14:11:36], "FAIL yu are more 5 mins ahead" }, #Sinaloa 
+    {"5 mins ahead", "Mexico/General", ~N[2022-03-23 15:11:36], "FAIL yu are more 5 mins ahead" }, #CDMX
+    {"5 mins ahead", "America/Cancun", ~N[2022-03-23 16:11:36], "FAIL yu are more 5 mins ahead" }, #QROO
+  ]
 
-  test "Comparacion de zonas preubas mías" do
-    # Prueba cuando esta 5 min + 1 segundo en el futuro la emision
-    pac = InvoiceValidator.zona(~N[2022-03-23 10:00:00], "Mexico/General")
-    emisor = InvoiceValidator.zona(~N[2022-03-23 09:05:01], "Mexico/BajaNorte")
-    assert {:error, "Invoice is more than 5 mins ahead in time"} == InvoiceValidator.validator_dates(emisor, pac)
-    # Prueba cunado esta 5 min -1 en el futuro la emsion
-    pac = InvoiceValidator.zona(~N[2022-03-23 10:00:00], "Mexico/General")
-    emisor = InvoiceValidator.zona(~N[2022-03-23 09:04:59], "Mexico/BajaNorte")
-    assert :ok == InvoiceValidator.validator_dates(emisor, pac)
-    # Prueba cuando esta 5 minutos en el futuro la emision
-    pac = InvoiceValidator.zona(~N[2022-03-23 10:00:00], "Mexico/General")
-    emisor = InvoiceValidator.zona(~N[2022-03-23 09:05:00], "Mexico/BajaNorte")
-    assert :ok == InvoiceValidator.validator_dates(emisor, pac)
-    # Prueba cuando son 72 horas pasadas de emision
-    pac = InvoiceValidator.zona(~N[2022-03-23 10:00:00], "Mexico/General")
-    emisor = InvoiceValidator.zona(~N[2022-03-20 09:00:00], "Mexico/BajaNorte")
-    assert :ok == InvoiceValidator.validator_dates(emisor, pac)
-    # Pureba cuando son  72 horas + 1 segundo pasadas de emision
-    pac = InvoiceValidator.zona(~N[2022-03-23 10:00:00], "Mexico/General")
-    emisor = InvoiceValidator.zona(~N[2022-03-20 08:59:59], "Mexico/BajaNorte")
-    assert {:error, "Invoice pass the 72 hr "} == InvoiceValidator.validator_dates(emisor, pac)
-    # Prueba cuando son  72 horas -1 segundo 
-    pac = InvoiceValidator.zona(~N[2022-03-23 10:00:00], "Mexico/General")
-    emisor = InvoiceValidator.zona(~N[2022-03-20 09:00:01], "Mexico/BajaNorte")
-    assert :ok == InvoiceValidator.validator_dates(emisor, pac)
+  for {time, em_zn, em_dt, msg} <- data do
+    @time time
+    @em_zn em_zn
+    @em_dt em_dt
+    @msg msg
+
+    case @time do
+      "72 hours before" ->
+        case @msg do
+          "FAIL passes 72 limit" ->
+            test "#{@time}, emisor in #{@em_zn} at #{@em_dt} returns #{@msg}" do
+              assert {:error, "Invoice pass the 72 hr "} == validator_dates(zona_f(@em_dt, @em_zn), @timbrado)
+            end
+          "SUCCESS on time" -> 
+            test "#{@time}, emisor in #{@em_zn} at #{@em_dt} returns #{@msg}" do
+              assert :ok == validator_dates(zona_f(@em_dt, @em_zn), @timbrado)
+              end      
+        end
+        
+      "5 mins ahead" -> 
+        case @msg do
+          "SUCCESS on time" ->
+            test "#{@time}, emisor in #{@em_zn} at #{@em_dt} returns #{@msg}" do
+              assert :ok == validator_dates(zona_f(@em_dt, @em_zn), @timbrado)
+              end 
+            "FAIL yu are more 5 mins ahead" ->
+              test "#{@time}, emisor in #{@em_zn} at #{@em_dt} returns #{@msg}" do
+                assert {:error, "Invoice is more than 5 mins ahead in time"} == validator_dates(zona_f(@em_dt, @em_zn), @timbrado)
+                end 
+        end
+    end
   end
 
-  test "Facturacion Valores de Prueba" do
-    ######################## # 72 horas atras ##############################
-    # America/Tijuana
-    timbrado = InvoiceValidator.zona(~N[2022-03-23 15:06:35], "Mexico/General")
-    emision = InvoiceValidator.zona(~N[2022-03-20 13:06:31], "America/Tijuana")
-    assert {:error, "Invoice pass the 72 hr "} == InvoiceValidator.validator_dates(emision, timbrado)
-    # "America/Sinaloa"
-    emision = InvoiceValidator.zona(~N[2022-03-20 14:06:31], "America/Mazatlan")
-    assert {:error, "Invoice pass the 72 hr "} == InvoiceValidator.validator_dates(emision, timbrado)
-    # "America/CDMX"
-    emision = InvoiceValidator.zona(~N[2022-03-20 15:06:31], "Mexico/General")
-    assert {:error, "Invoice pass the 72 hr "} == InvoiceValidator.validator_dates(emision, timbrado)
-    # "America/QROO"
-    emision = InvoiceValidator.zona(~N[2022-03-20 16:06:31], "America/Cancun")
-    assert {:error, "Invoice pass the 72 hr "} == InvoiceValidator.validator_dates(emision, timbrado)
-    # America/Tijuana se corrigio este ya que daban 73 horas y no era valido, 
-    emision = InvoiceValidator.zona(~N[2022-03-20 14:06:35], "America/Tijuana")
-    assert :ok == InvoiceValidator.validator_dates(emision, timbrado)
-    # America Sinaloa
-    emision = InvoiceValidator.zona(~N[2022-03-20 14:06:35], "America/Tijuana")
-    assert :ok == InvoiceValidator.validator_dates(emision, timbrado)
-    # America /CDMX
-    emision = InvoiceValidator.zona(~N[2022-03-20 15:06:35], "Mexico/General")
-    assert :ok == InvoiceValidator.validator_dates(emision, timbrado)
-    # "America/QROO"
-    emision = InvoiceValidator.zona(~N[2022-03-20 16:06:35], "America/Cancun")
-    assert :ok == InvoiceValidator.validator_dates(emision, timbrado)
-
-    ######################## # 5mins adelante  ############################## 
-    # America/Tijuana
-    emision = InvoiceValidator.zona(~N[2022-03-23 13:11:35], "America/Tijuana")
-    assert :ok == InvoiceValidator.validator_dates(emision, timbrado)
-    # "America/Sinaloa"
-    emision = InvoiceValidator.zona(~N[2022-03-23 14:11:35], "America/Mazatlan")
-    assert :ok == InvoiceValidator.validator_dates(emision, timbrado)
-    # America /CDMX
-    emision = InvoiceValidator.zona(~N[2022-03-23 15:11:35], "Mexico/General")
-    assert :ok == InvoiceValidator.validator_dates(emision, timbrado)
-    # "America/QROO"
-    emision = InvoiceValidator.zona(~N[2022-03-23 16:11:35], "America/Cancun")
-    assert :ok == InvoiceValidator.validator_dates(emision, timbrado)
-    # America/Tijuana se corrigio porque se estaba considerando con una hora de mas a tijuana
-    emision = InvoiceValidator.zona(~N[2022-03-23 14:11:36], "America/Tijuana")
-    assert {:error, "Invoice is more than 5 mins ahead in time"} == InvoiceValidator.validator_dates(emision, timbrado)
-    # "America/Sinaloa"
-    emision = InvoiceValidator.zona(~N[2022-03-23 14:11:36], "America/Mazatlan")
-    assert {:error, "Invoice is more than 5 mins ahead in time"} == InvoiceValidator.validator_dates(emision, timbrado)
-    # America /CDMX
-    emision = InvoiceValidator.zona(~N[2022-03-23 15:11:36], "Mexico/General")
-    assert {:error, "Invoice is more than 5 mins ahead in time"} == InvoiceValidator.validator_dates(emision, timbrado)
-    # "America/QROO"
-    emision = InvoiceValidator.zona(~N[2022-03-23 16:11:36], "America/Cancun")
-    assert {:error, "Invoice is more than 5 mins ahead in time"} == InvoiceValidator.validator_dates(emision, timbrado)
-  end
+   defp zona_f(%NaiveDateTime{} = date, zona), do: DateTime.from_naive!(date,zona,Tzdata.TimeZoneDatabase) 
 end
