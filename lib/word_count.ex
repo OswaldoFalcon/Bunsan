@@ -15,8 +15,8 @@ defmodule WordCount do
             end)
         end)
       end
-    def count(text) do
-   # {:ok, text} = File.read(path)
+    def count(path) do
+    {:ok, text} = File.read(path)
     #se usa Sigils para poder elinar los caracteres especiales, pero mantener letras y numeros#
     list_words = String.downcase(text) |> String.normalize(:nfd) |> String.replace(~r/[^0-9A-z\s]/u, "") |> String.split(" ")
     # Ahora el  acumulador es un mapa y vamos agregando llaves 

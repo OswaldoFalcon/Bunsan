@@ -21,7 +21,7 @@ defmodule ProcessRing do
         
     end
   
-    def wait_for_config() dox
+    def wait_for_config() do
       receive do
         {:config, next_pid, main} ->
           IO.puts("pid: #{inspect(self())}, next: #{inspect(next_pid)} main: #{main}")
