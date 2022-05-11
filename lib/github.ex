@@ -33,15 +33,17 @@ defmodule GitHub do
   def repo_info(client, user_name, repo_name) do
     {:ok, response} = Tesla.get(client, "/repos/" <> user_name <> "/" <> repo_name)
     name = Map.fetch(response.body, "name") |> elem(1)
+
     {:ok, response} = Tesla.get(client, "/repos/" <> user_name <> "/" <> repo_name <> "/commits")
     commits = length(response.body)
 
     {:ok, response} =
       Tesla.get(client, "/repos/" <> user_name <> "/" <> repo_name <> "/languages")
+    languages = Enum.map(response.body, fn {k, _} -> k end) |> Enum.join(" ")
 
-    languages = Enum.map(response.body, fn {k, _} -> k end) |> List.to_string()
     {:ok, response} = Tesla.get(client, "/repos/" <> user_name <> "/" <> repo_name)
     owner = Map.fetch(response.body, "owner") |> elem(1) |> Map.fetch("login") |> elem(1)
+
     %{name: name, commits: commits, languages: languages, owner: owner}
   end
 end
