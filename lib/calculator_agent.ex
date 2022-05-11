@@ -1,10 +1,9 @@
 defmodule CalculatorAgent do
-  
   @moduledoc """
   This module is a Calculator. Each state representes 
   a total count.
   """
-    
+
   def init(init_val) do
     {_, pid} = Agent.start(fn -> init_val end)
     pid

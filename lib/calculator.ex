@@ -1,7 +1,7 @@
 defmodule Calculator do
-@moduledoc """
-This module recives a mmessage, and do differents operations
-"""
+  @moduledoc """
+  This module recives a mmessage, and do differents operations
+  """
   def init(n) do
     state =
       receive do

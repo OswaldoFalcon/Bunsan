@@ -4,7 +4,7 @@ defmodule Mylist do
   Only for list.
   Uses Recurssion to operate like Enum functions. 
   """
-  
+
   @doc """
     Invokes the given fun for each element in the enumerable.
     
