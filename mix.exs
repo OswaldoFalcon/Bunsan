@@ -21,7 +21,7 @@ defmodule BecariosBunsan2022B1.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger]
+      applications: [:amqp, :logger]
     ]
   end
 
@@ -39,7 +39,8 @@ defmodule BecariosBunsan2022B1.MixProject do
       # optional, but recommended adapter
       {:hackney, "~> 1.17"},
       # optional, required by JSON middleware
-      {:jason, ">= 1.0.0"}
+      {:jason, ">= 1.0.0"},
+      {:amqp, "~> 1.0"},
     ]
   end
 end
